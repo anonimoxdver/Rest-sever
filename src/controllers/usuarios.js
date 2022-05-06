@@ -1,51 +1,80 @@
 import { response, request } from 'express'
+import bcryptjs from 'bcryptjs'
+
+import  Model  from '../database/usuariosDB.js';
 
 
 
-export const usuariosGet = (req  = request  , res = response) => {
 
-    const {q, nombre = 'no name', apikey, page, limit} = req.query;
-    res.status(403).json({       
-        msg: 'get API - controlador',
-         q,
-         nombre, 
-         apikey,
-         page,
-         limit
+export const usuariosGet = async(req  = request  , res = response) => {
+
+    //const {q, nombre = 'no name', apikey, page, limit} = req.query;
+    const { limite = 5, desde = 0 } = req.query;
+    const query = {estado: true};
+
+
+    const [total, usuarios] = await Promise.all([
+        Model.countDocuments(query),
+        Model.find(query)
+            .skip(Number(desde))
+            .limit(Number(limite))
+    ])
+    res.json({ 
+        total,
+        usuarios   
     });
 } 
 
 
 
-export const usuariosPut = (req  = request, res) => {
+export const usuariosPut = async(req  = request, res) => {
     const {id} = req.params;
+    const { _id ,password, google, correo, ...resto} = req.body;
 
-    res.status(400).json({       
-    msg: 'put API - controlador',
-    id
-    });
+    if ( password ) {      
+        //Encriptar la contraseña
+        const salt = bcryptjs.genSaltSync();
+        resto.password = bcryptjs.hashSync(password, salt)
+    }
+
+    const usuario = await Model.findByIdAndUpdate(id , resto)
+
+    res.status(400).json( usuario );
 }
 
 
 
 
-export const usuariosPost = (req  = request, res = response) => {
+export const usuariosPost = async(req  = request, res = response) => {
 
-    const {nombre, edad} = req.body;
 
+    const { nombre, correo, password, rol} = req.body;
+    const usuario = new Model( { nombre, correo, password, rol} );
+
+
+
+    //Encriptar la contraseña
+    const salt = bcryptjs.genSaltSync();
+    usuario.password = bcryptjs.hashSync(password, salt)
+    
+
+    // Guardar en DB
+    await usuario.save()
     res.json({       
         msg: 'post API - controlador post',
-       nombre,
-       edad
+        usuario
     });
 }
 
 
 
-export const usuariosDelete = (req, res) => {
-    res.status(403).json({       
-    msg: 'delete API - controlador'
-    });
+export const usuariosDelete = async(req  = request, res = response) => {
+
+    const { id } = req.params
+    // const usuario = await Model.findByIdAndDelete( id );
+    const usuario = await Model.findByIdAndUpdate(id, {estado: false} );
+
+    res.json( usuario );
 }
 
 
