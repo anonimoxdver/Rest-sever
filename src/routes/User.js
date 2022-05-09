@@ -6,7 +6,7 @@ import {usuariosDelete,
         usuariosPost, 
         usuariosPut } from '../controllers/usuarios.js';
 import { esRoleValido , emailExiste, existeUsuarioPorId} from '../helpers/db-validators.js';
-import { validarCampos } from '../middlewares/validar-campos.js';
+import { esAdminRole, tieneRole, validarCampos, validarJWT} from '../middlewares/index.js'
 
 export const router = Router();
 
@@ -31,6 +31,9 @@ router.post('/', [
 ],usuariosPost)
 
 router.delete('/:id', [
+        validarJWT, 
+        esAdminRole,  
+        tieneRole('ADMIN_ROLE', 'VENTAS_ROLE', 'USER_ROLE'),    
         check('id', 'No es ID valido').isMongoId(),
         check('id').custom(existeUsuarioPorId),
         validarCampos

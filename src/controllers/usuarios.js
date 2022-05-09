@@ -71,10 +71,13 @@ export const usuariosPost = async(req  = request, res = response) => {
 export const usuariosDelete = async(req  = request, res = response) => {
 
     const { id } = req.params
+
+  
     // const usuario = await Model.findByIdAndDelete( id );
     const usuario = await Model.findByIdAndUpdate(id, {estado: false} );
 
-    res.json( usuario );
+
+    res.json( usuario);
 }
 
 
